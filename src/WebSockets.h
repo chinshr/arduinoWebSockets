@@ -63,7 +63,14 @@
 
 #if defined(ESP8266) || defined(ESP32)
 
-#define WEBSOCKETS_MAX_DATA_SIZE (15 * 1024)
+/* library-claw: raised from 15 KB. xAI streaming TTS (wss://api.x.ai/v1/tts)
+ * sends audio.delta frames larger than the old cap; handleWebsocket() then
+ * silently clientDisconnect(1009)-ed on the FIRST audio frame, so the WS TTS
+ * path produced zero audio and fell back to REST on every reply. The payload
+ * buffer is a transient malloc(payloadLen+1); on our PSRAM build, allocations
+ * above the SPIRAM_MALLOC_ALWAYSINTERNAL threshold (16 KB) come from PSRAM,
+ * so large frames do not pressure internal RAM. */
+#define WEBSOCKETS_MAX_DATA_SIZE (256 * 1024)
 #define WEBSOCKETS_USE_BIG_MEM
 #define GET_FREE_HEAP ESP.getFreeHeap()
 // moves all Header strings to Flash (~300 Byte)
